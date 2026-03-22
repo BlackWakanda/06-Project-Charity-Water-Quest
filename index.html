@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
   <title>Charity: WaterTap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -20,9 +23,14 @@
       <div class="hud-item">
         <span class="hud-label">Tier</span>
         <span id="tier" class="hud-value">Tier 0</span>
+        <div class="tier-progress" aria-hidden="true">
+          <div id="tier-progress-fill" class="tier-progress-fill"></div>
+        </div>
+        <span id="tier-progress-text" class="hud-subvalue">Progress 0/2 rounds</span>
       </div>
       <div class="hud-item hud-controls">
         <span class="hud-label">Control</span>
+        <span id="mode-display" class="hud-subvalue">Mode: Normal</span>
         <button id="reset-game" type="button">Reset</button>
       </div>
     </section>
@@ -46,6 +54,18 @@
       <div class="pump-panel">
         <h1>Charity: WaterTap</h1>
         <p id="status-text" class="status-text">Tap rapidly to power the pump and fill the well!</p>
+        <section id="mission-card" class="mission-card" aria-label="charity water mission">
+          <h3>Mission: Clean Water for Everyone</h3>
+          <p>
+            charity: water is a nonprofit on a mission to bring clean and safe drinking water to people
+            in communities around the world.
+          </p>
+          <ul>
+            <li>771 million people still lack basic access to clean water.</li>
+            <li>Every game round represents communities gaining safer, healthier futures.</li>
+            <li>Your taps power progress, one village at a time.</li>
+          </ul>
+        </section>
         <button id="pump-btn" class="pump-btn hidden" aria-label="Pump handle">
           <span class="pump-handle"></span>
           <span class="pump-base"></span>
@@ -56,12 +76,45 @@
     </section>
   </main>
 
-  <section id="start-overlay" class="overlay">
-    <div class="card">
+  <section id="intro-overlay" class="overlay">
+    <div class="card intro-card">
       <img src="img/cw_logo_horizontal.png" alt="charity water logo" class="logo" />
       <h2>Charity: WaterTap</h2>
       <p>Tap rapidly to power the pump and fill the well before time runs out.</p>
-      <button id="start-game">Start Mission</button>
+      <button id="open-difficulty" type="button">Start Game</button>
+    </div>
+  </section>
+
+  <section id="mission-overlay" class="overlay hidden">
+    <div class="card mission-overlay-card">
+      <h2>charity: water Mission</h2>
+      <p class="overlay-lead">
+        We are a nonprofit organization bringing clean and safe drinking water to people around the world.
+      </p>
+      <ul class="mission-overlay-list">
+        <li>771 million people still lack basic access to clean water.</li>
+        <li>Clean water helps kids stay healthy and attend school more consistently.</li>
+        <li>Each round you complete represents progress for a real community.</li>
+      </ul>
+      <button id="continue-to-difficulty" type="button">Continue</button>
+    </div>
+  </section>
+
+  <section id="difficulty-overlay" class="overlay hidden">
+    <div class="card difficulty-card">
+      <h2>Pick Your Difficulty</h2>
+      <p class="overlay-lead">Tap a mode to begin immediately.</p>
+      <p class="difficulty-label">Choose Difficulty</p>
+      <div class="difficulty-options" role="group" aria-label="Select game difficulty">
+        <button class="difficulty-btn" type="button" data-difficulty="easy" aria-pressed="false">Easy</button>
+        <button class="difficulty-btn active" type="button" data-difficulty="normal" aria-pressed="true">Normal</button>
+        <button class="difficulty-btn" type="button" data-difficulty="hard" aria-pressed="false">Expert</button>
+      </div>
+      <div class="difficulty-notes" aria-hidden="true">
+        <span>Easy: forgiving timers and hazards.</span>
+        <span>Normal: balanced pace and pressure.</span>
+        <span>Expert: intense but still winnable.</span>
+      </div>
     </div>
   </section>
 
@@ -80,6 +133,14 @@
       </a>
     </div>
   </section>
+
+  <footer class="site-footer" aria-label="charity water links">
+    <p>Learn more and support clean water access:</p>
+    <div class="footer-links">
+      <a href="https://www.charitywater.org/home" target="_blank" rel="noopener noreferrer">charity: water Home</a>
+      <a href="https://www.charitywater.org/donate" target="_blank" rel="noopener noreferrer">Donate</a>
+    </div>
+  </footer>
 
   <script src="script.js"></script>
 </body>
