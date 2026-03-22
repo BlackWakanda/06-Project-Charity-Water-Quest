@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Charity: WaterTap</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+  <main class="game-shell">
+    <section id="hud" class="hud hidden" aria-live="polite">
+      <div class="hud-item">
+        <span class="hud-label">Time</span>
+        <span id="timer" class="hud-value">20s</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Purity</span>
+        <span id="purity" class="hud-value">0%</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">Tier</span>
+        <span id="tier" class="hud-value">Tier 0</span>
+      </div>
+      <div class="hud-item hud-controls">
+        <span class="hud-label">Control</span>
+        <button id="reset-game" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="playfield">
+      <div class="meter-panel">
+        <h2>Water Meter</h2>
+        <div class="meter-wrap">
+          <div class="meter-track" aria-label="Water level meter">
+            <div id="meter-fill" class="meter-fill"></div>
+          </div>
+          <div class="meter-marks">
+            <span>100% Powered</span>
+            <span>75% Village</span>
+            <span>25% Family</span>
+            <span>0% Tier 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pump-panel">
+        <h1>Charity: WaterTap</h1>
+        <p id="status-text" class="status-text">Tap rapidly to power the pump and fill the well!</p>
+        <button id="pump-btn" class="pump-btn hidden" aria-label="Pump handle">
+          <span class="pump-handle"></span>
+          <span class="pump-base"></span>
+          <span id="droplet" class="droplet" aria-hidden="true"></span>
+        </button>
+        <button id="obstacle" class="obstacle hidden" aria-label="Contamination obstacle">!</button>
+      </div>
+    </section>
+  </main>
+
+  <section id="start-overlay" class="overlay">
+    <div class="card">
+      <img src="img/cw_logo_horizontal.png" alt="charity water logo" class="logo" />
+      <h2>Charity: WaterTap</h2>
+      <p>Tap rapidly to power the pump and fill the well before time runs out.</p>
+      <button id="start-game">Start Mission</button>
+    </div>
+  </section>
+
+  <section id="end-overlay" class="overlay hidden">
+    <div class="card">
+      <h2 id="result-title">Result</h2>
+      <p id="result-message"></p>
+      <button id="play-again">Play Again</button>
+      <a
+        class="donate-link"
+        href="https://www.charitywater.org/donate"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Donate to charity: water
+      </a>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,459 @@
+/* Charity: water Brand Colors & Fonts
+
+Primary Colors:
+- Yellow:     #FFC907
+- Blue:       #2E9DF7
+
+Secondary Colors:
+- Light Blue: #8BD1CB
+- Green:      #4FCB53
+- Orange:     #FF902A
+- Red:        #F5402C
+- Dark Green: #159A48
+- Pink:       #F16061
+
+Fonts:
+- Proxima Nova
+- Avenir
+
+*/
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  line-height: 1.35;
+  color: #1b2c3a;
+  background:
+    radial-gradient(circle at 20% 10%, #d6f6ff, transparent 40%),
+    radial-gradient(circle at 85% 90%, #ffe08a, transparent 45%),
+    #f4f9ff;
+  overflow-x: hidden;
+}
+
+.game-shell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: clamp(12px, 2.5vw, 20px);
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.hud-item {
+  background: #ffffff;
+  border: 2px solid #d3ecff;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.hud-label {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4a708b;
+}
+
+.hud-value {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  font-weight: 700;
+}
+
+.playfield {
+  display: grid;
+  grid-template-columns: minmax(220px, 250px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.meter-panel,
+.pump-panel {
+  background: #ffffff;
+  border: 2px solid #dcefff;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.meter-panel h2,
+.pump-panel h1 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.meter-wrap {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.meter-track {
+  width: 64px;
+  height: clamp(240px, 50vh, 340px);
+  border-radius: 32px;
+  border: 3px solid #0c6eb8;
+  background: #eaf6ff;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.meter-fill {
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(180deg, #6fd3ff 0%, #1f94f7 100%);
+  transition: height 0.15s linear, box-shadow 0.2s ease;
+}
+
+.meter-fill.glow {
+  box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.7);
+}
+
+.meter-marks {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #33607d;
+  font-size: clamp(0.82rem, 2vw, 0.95rem);
+}
+
+.status-text {
+  text-align: center;
+  font-size: 1.1rem;
+  margin-bottom: 22px;
+}
+
+.hud-controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hud-controls button {
+  margin-top: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  min-height: 38px;
+}
+
+.pump-btn {
+  width: 250px;
+  height: 230px;
+  margin: 0 auto;
+  display: block;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  position: relative;
+  touch-action: manipulation;
+}
+
+.pump-panel {
+  position: relative;
+}
+
+.pump-handle {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  width: 150px;
+  height: 24px;
+  transform: translateX(-50%) rotate(-12deg);
+  transform-origin: 25px center;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #ffa932 0%, #f57c00 100%);
+  transition: transform 0.08s ease;
+}
+
+.pump-base {
+  position: absolute;
+  left: 50%;
+  bottom: 35px;
+  width: 120px;
+  height: 125px;
+  transform: translateX(-50%);
+  border-radius: 24px 24px 12px 12px;
+  background: linear-gradient(180deg, #4db0ff 0%, #147ed8 100%);
+  box-shadow: 0 8px 0 #0f68b2;
+}
+
+.droplet {
+  position: absolute;
+  left: 74%;
+  bottom: 98px;
+  width: 20px;
+  height: 26px;
+  background: #12a0ff;
+  border-radius: 50% 50% 55% 55%;
+  transform: scale(0);
+  opacity: 0;
+}
+
+.droplet.active {
+  animation: drip 0.3s ease;
+}
+
+.obstacle {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #b02f2f;
+  background: radial-gradient(circle at 30% 30%, #ffb56e 0%, #f5402c 80%);
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  z-index: 2;
+  box-shadow: 0 8px 18px rgba(245, 64, 44, 0.35);
+  animation: obstaclePulse 0.8s ease-in-out infinite alternate;
+}
+
+.pump-btn.pumping .pump-handle {
+  transform: translateX(-50%) rotate(10deg);
+}
+
+@keyframes drip {
+  0% {
+    transform: translateY(-4px) scale(0.5);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(26px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes obstaclePulse {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 36, 56, 0.65);
+  display: grid;
+  place-items: center;
+  padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+}
+
+.card {
+  width: min(92vw, 520px);
+  max-height: min(88vh, 680px);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(3, 20, 37, 0.24);
+  overflow-y: auto;
+}
+
+.logo {
+  width: min(72%, 300px);
+  height: auto;
+}
+
+button,
+.donate-link {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 12px 22px;
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+button {
+  background: #ffc907;
+  color: #17324f;
+}
+
+.donate-link {
+  background: #2e9df7;
+  color: #ffffff;
+}
+
+button:hover,
+.donate-link:hover {
+  transform: translateY(-1px);
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 860px) {
+  .game-shell {
+    padding: 16px;
+  }
+
+  .playfield {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .meter-panel {
+    order: 2;
+  }
+
+  .pump-panel {
+    order: 1;
+  }
+
+  .meter-wrap {
+    justify-content: space-evenly;
+  }
+
+  .meter-track {
+    width: 56px;
+    height: 300px;
+  }
+
+  .hud {
+    grid-template-columns: repeat(4, minmax(80px, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hud-item:nth-child(3),
+  .hud-item:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+
+  .pump-btn {
+    width: 210px;
+    height: 195px;
+  }
+
+  .pump-handle {
+    width: 126px;
+    height: 22px;
+    top: 24px;
+  }
+
+  .pump-base {
+    width: 100px;
+    height: 108px;
+    bottom: 30px;
+  }
+
+  .droplet {
+    bottom: 86px;
+  }
+
+  .obstacle {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-shell {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .hud {
+    grid-template-columns: 1fr;
+  }
+
+  .meter-track {
+    width: 48px;
+    height: 240px;
+    border-width: 2px;
+  }
+
+  .meter-marks {
+    font-size: 0.82rem;
+  }
+
+  .status-text {
+    font-size: 1rem;
+  }
+
+  .pump-btn {
+    width: 180px;
+    height: 170px;
+  }
+
+  .pump-handle {
+    width: 108px;
+    height: 18px;
+    top: 22px;
+  }
+
+  .pump-base {
+    width: 86px;
+    height: 92px;
+    bottom: 26px;
+  }
+
+  .droplet {
+    left: 76%;
+    bottom: 74px;
+    width: 15px;
+    height: 20px;
+  }
+
+  .obstacle {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  button,
+  .donate-link {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .overlay {
+    place-items: start center;
+    overflow-y: auto;
+  }
+
+  .card {
+    margin: 16px auto;
+  }
+
+  .meter-track {
+    height: 180px;
+  }
+
+  .pump-btn {
+    width: 170px;
+    height: 150px;
+  }
+}
