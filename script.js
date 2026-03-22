@@ -1,13 +1,65 @@
-const BASE_TIME_SECONDS = 20;
+const DIFFICULTY_PRESETS = {
+  easy: {
+    label: 'Easy',
+    baseTimeSeconds: 26,
+    timePerTierSeconds: 6,
+    baseTapGain: 3.1,
+    minTapGain: 2.35,
+    tapGainDropPerTier: 0.2,
+    leakBase: 0.22,
+    leakTierStep: 0.1,
+    missPenaltyBase: 6,
+    missPenaltyTierStep: 1.5,
+    obstacleVisibleMs: 2200,
+    obstacleTier2DelayMs: 4600,
+    obstacleTier3DelayMs: 3800,
+    obstacleBeyondDelayMs: 3000,
+    roundsNeededByTier: [2, 2, 2, 3],
+  },
+  normal: {
+    label: 'Normal',
+    baseTimeSeconds: 20,
+    timePerTierSeconds: 5,
+    baseTapGain: 2.9,
+    minTapGain: 2.0,
+    tapGainDropPerTier: 0.25,
+    leakBase: 0.28,
+    leakTierStep: 0.12,
+    missPenaltyBase: 8,
+    missPenaltyTierStep: 2,
+    obstacleVisibleMs: 1800,
+    obstacleTier2DelayMs: 3800,
+    obstacleTier3DelayMs: 3200,
+    obstacleBeyondDelayMs: 2200,
+    roundsNeededByTier: [2, 2, 3, 3],
+  },
+  hard: {
+    label: 'Expert',
+    baseTimeSeconds: 19,
+    timePerTierSeconds: 4,
+    baseTapGain: 2.78,
+    minTapGain: 1.9,
+    tapGainDropPerTier: 0.24,
+    leakBase: 0.31,
+    leakTierStep: 0.14,
+    missPenaltyBase: 9,
+    missPenaltyTierStep: 2.2,
+    obstacleVisibleMs: 1550,
+    obstacleTier2DelayMs: 3500,
+    obstacleTier3DelayMs: 2850,
+    obstacleBeyondDelayMs: 2200,
+    roundsNeededByTier: [2, 3, 3, 3],
+  },
+};
+
 const MAX_TIME_SECONDS = 180;
-const BASE_TAP_GAIN = 2.9;
-const MIN_TAP_GAIN = 2.0;
 const LEAK_TICK_MS = 100;
 const TIER_UNLOCK_PERCENT = 100;
-const OBSTACLE_VISIBLE_MS = 1400;
 const FINAL_TIER = 3;
 
-const startOverlay = document.getElementById('start-overlay');
+const introOverlay = document.getElementById('intro-overlay');
+const missionOverlay = document.getElementById('mission-overlay');
+const difficultyOverlay = document.getElementById('difficulty-overlay');
 const endOverlay = document.getElementById('end-overlay');
 const hud = document.getElementById('hud');
 const pumpPanel = document.querySelector('.pump-panel');
@@ -15,78 +67,139 @@ const pumpPanel = document.querySelector('.pump-panel');
 const timerEl = document.getElementById('timer');
 const purityEl = document.getElementById('purity');
 const tierEl = document.getElementById('tier');
+const tierProgressFillEl = document.getElementById('tier-progress-fill');
+const tierProgressTextEl = document.getElementById('tier-progress-text');
 const meterFillEl = document.getElementById('meter-fill');
 const statusTextEl = document.getElementById('status-text');
+const missionCardEl = document.getElementById('mission-card');
 const dropletEl = document.getElementById('droplet');
 const obstacleEl = document.getElementById('obstacle');
 
-const startBtn = document.getElementById('start-game');
+const openDifficultyBtn = document.getElementById('open-difficulty');
+const continueToDifficultyBtn = document.getElementById('continue-to-difficulty');
 const pumpBtn = document.getElementById('pump-btn');
 const playAgainBtn = document.getElementById('play-again');
 const resetBtn = document.getElementById('reset-game');
+const modeDisplayEl = document.getElementById('mode-display');
+const difficultyButtons = document.querySelectorAll('.difficulty-btn');
 
 const resultTitle = document.getElementById('result-title');
 const resultMessage = document.getElementById('result-message');
 
 let isPlaying = false;
-let timeLeft = BASE_TIME_SECONDS;
+let selectedDifficulty = 'normal';
+let timeLeft = DIFFICULTY_PRESETS[selectedDifficulty].baseTimeSeconds;
 let waterLevel = 0;
 let tier = 0;
+let roundsCompletedInTier = 0;
 let timerIntervalId = null;
 let leakIntervalId = null;
 let obstacleSpawnTimeoutId = null;
 let obstacleHideTimeoutId = null;
 let recentTapTimes = [];
 
+function getDifficultySettings() {
+  return DIFFICULTY_PRESETS[selectedDifficulty] || DIFFICULTY_PRESETS.normal;
+}
+
+function getRoundsRequiredForTier() {
+  const settings = getDifficultySettings();
+  const tierTargets = settings.roundsNeededByTier || [2, 2, 3, 3];
+  const fallbackTarget = tierTargets[tierTargets.length - 1] || 3;
+  return tierTargets[tier] || fallbackTarget;
+}
+
+function updateDifficultyUi() {
+  const settings = getDifficultySettings();
+  modeDisplayEl.textContent = `Mode: ${settings.label}`;
+
+  difficultyButtons.forEach((button) => {
+    const isActive = button.dataset.difficulty === selectedDifficulty;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
+}
+
+function setDifficulty(nextDifficulty) {
+  if (!DIFFICULTY_PRESETS[nextDifficulty]) {
+    return;
+  }
+
+  selectedDifficulty = nextDifficulty;
+  updateDifficultyUi();
+  resetGameState();
+}
+
+function showMissionOverlay() {
+  introOverlay.classList.add('hidden');
+  missionOverlay.classList.remove('hidden');
+}
+
+function showDifficultySelection() {
+  missionOverlay.classList.add('hidden');
+  difficultyOverlay.classList.remove('hidden');
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
 function getTierTime(secondsTier) {
+  const settings = getDifficultySettings();
   // Time increases a little each tier, but not enough to cancel the difficulty jump.
-  const scaled = BASE_TIME_SECONDS + (secondsTier * 5);
+  const scaled = settings.baseTimeSeconds + (secondsTier * settings.timePerTierSeconds);
   return Math.min(scaled, MAX_TIME_SECONDS);
 }
 
 function getTapGainForTier() {
+  const settings = getDifficultySettings();
   // Difficulty still rises by tier, but with a gentler drop in tap reward.
-  return Math.max(MIN_TAP_GAIN, BASE_TAP_GAIN - (tier * 0.25));
+  return Math.max(settings.minTapGain, settings.baseTapGain - (tier * settings.tapGainDropPerTier));
 }
 
 function getLeakAmount() {
+  const settings = getDifficultySettings();
   if (tier === 0) {
     return 0;
   }
 
   // Leak ramps up more gradually so tiers remain beatable.
-  return 0.28 + (tier * 0.12);
+  return settings.leakBase + (tier * settings.leakTierStep);
 }
 
 function getObstacleMissPenalty() {
-  return 9 + (tier * 3);
+  const settings = getDifficultySettings();
+  // Keep misses meaningful without wiping too much progress for new players.
+  return settings.missPenaltyBase + (tier * settings.missPenaltyTierStep);
 }
 
 function getObstacleSpawnDelay() {
+  const settings = getDifficultySettings();
   if (tier < 2) {
     return null;
   }
 
   // Tier 2 is intentionally calmer; Tier 3 speeds up slightly.
   if (tier === 2) {
-    return 3800;
+    return settings.obstacleTier2DelayMs;
   }
 
   if (tier === 3) {
-    return 2700;
+    return settings.obstacleTier3DelayMs;
   }
 
-  return 2200;
+  return settings.obstacleBeyondDelayMs;
 }
 
 function updateHud() {
+  const roundsRequired = getRoundsRequiredForTier();
+  const tierProgressPercent = clamp((roundsCompletedInTier / roundsRequired) * 100, 0, 100);
+
   timerEl.textContent = `${Math.ceil(timeLeft)}s`;
   purityEl.textContent = `${Math.round(waterLevel)}%`;
   tierEl.textContent = `Tier ${tier}`;
+  tierProgressFillEl.style.width = `${tierProgressPercent}%`;
+  tierProgressTextEl.textContent = `Progress ${roundsCompletedInTier}/${roundsRequired} rounds`;
   meterFillEl.style.height = `${waterLevel}%`;
 }
 
@@ -161,6 +274,8 @@ function showObstacle() {
     return;
   }
 
+  const settings = getDifficultySettings();
+
   const panelRect = pumpPanel.getBoundingClientRect();
   const obstacleSize = 44;
   const horizontalPadding = 20;
@@ -175,7 +290,7 @@ function showObstacle() {
   obstacleEl.classList.remove('hidden');
 
   clearTimeout(obstacleHideTimeoutId);
-  obstacleHideTimeoutId = setTimeout(handleMissedObstacle, OBSTACLE_VISIBLE_MS);
+  obstacleHideTimeoutId = setTimeout(handleMissedObstacle, settings.obstacleVisibleMs);
 }
 
 function scheduleObstacleSpawn() {
@@ -225,6 +340,7 @@ function showEndScreen(isWin) {
 
 function levelUpTier() {
   tier += 1;
+  roundsCompletedInTier = 0;
   timeLeft = getTierTime(tier);
   waterLevel = 0;
   recentTapTimes = [];
@@ -238,6 +354,44 @@ function levelUpTier() {
 
   updateHud();
   scheduleObstacleSpawn();
+}
+
+function pulseTierProgress() {
+  tierProgressFillEl.classList.remove('pulse');
+
+  // Restart animation for consecutive round clears.
+  void tierProgressFillEl.offsetWidth;
+  tierProgressFillEl.classList.add('pulse');
+}
+
+function startNextRoundInSameTier() {
+  timeLeft = getTierTime(tier);
+  waterLevel = 0;
+  recentTapTimes = [];
+  meterFillEl.classList.remove('glow');
+  hideObstacle();
+  updateHud();
+  scheduleObstacleSpawn();
+}
+
+function completeRound() {
+  const roundsRequired = getRoundsRequiredForTier();
+  roundsCompletedInTier += 1;
+  updateHud();
+  pulseTierProgress();
+
+  if (roundsCompletedInTier >= roundsRequired) {
+    if (tier >= FINAL_TIER) {
+      showEndScreen(true);
+      return;
+    }
+
+    levelUpTier();
+    return;
+  }
+
+  startNextRoundInSameTier();
+  statusTextEl.textContent = `Round clear! Tier ${tier} progress ${roundsCompletedInTier}/${roundsRequired}.`;
 }
 
 function tickTimer() {
@@ -282,12 +436,7 @@ function handlePumpTap() {
   updateSpeedFeedback();
 
   if (waterLevel >= TIER_UNLOCK_PERCENT) {
-    if (tier >= FINAL_TIER) {
-      showEndScreen(true);
-      return;
-    }
-
-    levelUpTier();
+    completeRound();
   }
 }
 
@@ -301,14 +450,17 @@ function handleObstacleTap() {
 }
 
 function resetGameState() {
+  const settings = getDifficultySettings();
   stopLoops();
   isPlaying = false;
-  timeLeft = BASE_TIME_SECONDS;
+  timeLeft = settings.baseTimeSeconds;
   waterLevel = 0;
   tier = 0;
+  roundsCompletedInTier = 0;
   recentTapTimes = [];
   meterFillEl.classList.remove('glow');
   statusTextEl.textContent = 'Tap rapidly to power the pump and fill the well!';
+  missionCardEl.classList.remove('hidden');
   hideObstacle();
   updateHud();
 }
@@ -317,9 +469,12 @@ function startGame() {
   resetGameState();
   isPlaying = true;
 
-  startOverlay.classList.add('hidden');
+  introOverlay.classList.add('hidden');
+  missionOverlay.classList.add('hidden');
+  difficultyOverlay.classList.add('hidden');
   endOverlay.classList.add('hidden');
   hud.classList.remove('hidden');
+  missionCardEl.classList.add('hidden');
   pumpBtn.classList.remove('hidden');
 
   timerIntervalId = setInterval(tickTimer, 1000);
@@ -335,16 +490,31 @@ function replayGame() {
 function resetToStartScreen() {
   resetGameState();
   endOverlay.classList.add('hidden');
+  missionOverlay.classList.add('hidden');
+  difficultyOverlay.classList.add('hidden');
   hud.classList.add('hidden');
+  missionCardEl.classList.remove('hidden');
   pumpBtn.classList.add('hidden');
-  startOverlay.classList.remove('hidden');
+  introOverlay.classList.remove('hidden');
 }
 
-startBtn.addEventListener('click', startGame);
+openDifficultyBtn.addEventListener('click', showMissionOverlay);
+continueToDifficultyBtn.addEventListener('click', showDifficultySelection);
 pumpBtn.addEventListener('pointerdown', handlePumpTap);
 obstacleEl.addEventListener('pointerdown', handleObstacleTap);
 playAgainBtn.addEventListener('click', replayGame);
 resetBtn.addEventListener('click', resetToStartScreen);
+difficultyButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    if (isPlaying) {
+      return;
+    }
+
+    setDifficulty(button.dataset.difficulty);
+    startGame();
+  });
+});
 
 // Initialize static values before the game starts.
+updateDifficultyUi();
 updateHud();
