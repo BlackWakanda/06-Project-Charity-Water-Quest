@@ -98,10 +98,20 @@ let obstacleSpawnTimeoutId = null;
 let obstacleHideTimeoutId = null;
 let recentTapTimes = [];
 
+/**
+ * Returns the active difficulty preset for the current game session.
+ *
+ * @returns {object} Difficulty configuration object.
+ */
 function getDifficultySettings() {
   return DIFFICULTY_PRESETS[selectedDifficulty] || DIFFICULTY_PRESETS.normal;
 }
 
+/**
+ * Calculates how many successful rounds are required before the current tier advances.
+ *
+ * @returns {number} Required rounds for the active tier.
+ */
 function getRoundsRequiredForTier() {
   const settings = getDifficultySettings();
   const tierTargets = settings.roundsNeededByTier || [2, 2, 3, 3];
@@ -109,6 +119,9 @@ function getRoundsRequiredForTier() {
   return tierTargets[tier] || fallbackTarget;
 }
 
+/**
+ * Updates the difficulty label and active state in the UI.
+ */
 function updateDifficultyUi() {
   const settings = getDifficultySettings();
   modeDisplayEl.textContent = `Mode: ${settings.label}`;
@@ -120,6 +133,11 @@ function updateDifficultyUi() {
   });
 }
 
+/**
+ * Switches the game to a new difficulty and resets the session state.
+ *
+ * @param {string} nextDifficulty - Difficulty key selected by the player.
+ */
 function setDifficulty(nextDifficulty) {
   if (!DIFFICULTY_PRESETS[nextDifficulty]) {
     return;
@@ -130,20 +148,40 @@ function setDifficulty(nextDifficulty) {
   resetGameState();
 }
 
+/**
+ * Displays the mission overlay and hides the intro overlay.
+ */
 function showMissionOverlay() {
   introOverlay.classList.add('hidden');
   missionOverlay.classList.remove('hidden');
 }
 
+/**
+ * Displays the difficulty selection overlay.
+ */
 function showDifficultySelection() {
   missionOverlay.classList.add('hidden');
   difficultyOverlay.classList.remove('hidden');
 }
 
+/**
+ * Clamps a numeric value into an inclusive range.
+ *
+ * @param {number} value - Value to clamp.
+ * @param {number} min - Minimum allowed value.
+ * @param {number} max - Maximum allowed value.
+ * @returns {number} Clamped value.
+ */
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+/**
+ * Calculates the timer duration for a tier, capped at the global maximum.
+ *
+ * @param {number} secondsTier - Current tier index.
+ * @returns {number} Seconds granted for the tier.
+ */
 function getTierTime(secondsTier) {
   const settings = getDifficultySettings();
   // Time increases a little each tier, but not enough to cancel the difficulty jump.
@@ -151,12 +189,22 @@ function getTierTime(secondsTier) {
   return Math.min(scaled, MAX_TIME_SECONDS);
 }
 
+/**
+ * Calculates the amount of water gained from one pump tap for the current tier.
+ *
+ * @returns {number} Water percentage added per tap.
+ */
 function getTapGainForTier() {
   const settings = getDifficultySettings();
   // Difficulty still rises by tier, but with a gentler drop in tap reward.
   return Math.max(settings.minTapGain, settings.baseTapGain - (tier * settings.tapGainDropPerTier));
 }
 
+/**
+ * Returns the passive leak amount applied on the current tier.
+ *
+ * @returns {number} Leak amount per tick.
+ */
 function getLeakAmount() {
   const settings = getDifficultySettings();
   if (tier === 0) {
@@ -167,12 +215,22 @@ function getLeakAmount() {
   return settings.leakBase + (tier * settings.leakTierStep);
 }
 
+/**
+ * Returns the penalty for missing an obstacle.
+ *
+ * @returns {number} Water percentage removed on a miss.
+ */
 function getObstacleMissPenalty() {
   const settings = getDifficultySettings();
   // Keep misses meaningful without wiping too much progress for new players.
   return settings.missPenaltyBase + (tier * settings.missPenaltyTierStep);
 }
 
+/**
+ * Returns the delay before the next obstacle should appear, if hazards are enabled.
+ *
+ * @returns {?number} Milliseconds until spawn, or null when hazards are disabled.
+ */
 function getObstacleSpawnDelay() {
   const settings = getDifficultySettings();
   if (tier < 2) {
@@ -191,6 +249,9 @@ function getObstacleSpawnDelay() {
   return settings.obstacleBeyondDelayMs;
 }
 
+/**
+ * Refreshes the HUD values and progress indicators.
+ */
 function updateHud() {
   const roundsRequired = getRoundsRequiredForTier();
   const tierProgressPercent = clamp((roundsCompletedInTier / roundsRequired) * 100, 0, 100);
@@ -203,6 +264,9 @@ function updateHud() {
   meterFillEl.style.height = `${waterLevel}%`;
 }
 
+/**
+ * Updates the status text based on the current water level milestone.
+ */
 function showMilestoneMessage() {
   if (waterLevel >= 100) {
     statusTextEl.textContent = 'Powered state reached!';
@@ -222,6 +286,9 @@ function showMilestoneMessage() {
   statusTextEl.textContent = 'Tap rapidly to power the pump and fill the well!';
 }
 
+/**
+ * Highlights rapid tapping feedback and toggles the glow state.
+ */
 function updateSpeedFeedback() {
   const now = Date.now();
   recentTapTimes = recentTapTimes.filter((stamp) => now - stamp < 1000);
@@ -235,6 +302,9 @@ function updateSpeedFeedback() {
   }
 }
 
+/**
+ * Plays the pump animation and restarts the droplet effect.
+ */
 function animatePump() {
   pumpBtn.classList.add('pumping');
   dropletEl.classList.remove('active');
@@ -248,10 +318,16 @@ function animatePump() {
   }, 90);
 }
 
+/**
+ * Hides the contamination obstacle.
+ */
 function hideObstacle() {
   obstacleEl.classList.add('hidden');
 }
 
+/**
+ * Applies the miss penalty when the obstacle times out.
+ */
 function handleMissedObstacle() {
   if (!isPlaying) {
     return;
@@ -269,6 +345,9 @@ function handleMissedObstacle() {
   hideObstacle();
 }
 
+/**
+ * Places the contamination obstacle at a random point in the playfield.
+ */
 function showObstacle() {
   if (!isPlaying) {
     return;
@@ -293,6 +372,9 @@ function showObstacle() {
   obstacleHideTimeoutId = setTimeout(handleMissedObstacle, settings.obstacleVisibleMs);
 }
 
+/**
+ * Schedules the next contamination obstacle spawn if hazards are active.
+ */
 function scheduleObstacleSpawn() {
   clearTimeout(obstacleSpawnTimeoutId);
 
@@ -312,6 +394,9 @@ function scheduleObstacleSpawn() {
   }, spawnDelay);
 }
 
+/**
+ * Clears every active timer and timeout used by the game loops.
+ */
 function stopLoops() {
   clearInterval(timerIntervalId);
   clearInterval(leakIntervalId);
@@ -323,6 +408,11 @@ function stopLoops() {
   obstacleHideTimeoutId = null;
 }
 
+/**
+ * Shows the end screen and copies the final win/lose message into the UI.
+ *
+ * @param {boolean} isWin - Whether the player completed the game successfully.
+ */
 function showEndScreen(isWin) {
   isPlaying = false;
   stopLoops();
@@ -338,6 +428,9 @@ function showEndScreen(isWin) {
   }
 }
 
+/**
+ * Advances the game to the next tier and resets round state.
+ */
 function levelUpTier() {
   tier += 1;
   roundsCompletedInTier = 0;
@@ -356,6 +449,9 @@ function levelUpTier() {
   scheduleObstacleSpawn();
 }
 
+/**
+ * Restarts the tier progress animation.
+ */
 function pulseTierProgress() {
   tierProgressFillEl.classList.remove('pulse');
 
@@ -364,6 +460,9 @@ function pulseTierProgress() {
   tierProgressFillEl.classList.add('pulse');
 }
 
+/**
+ * Resets the timer and playfield for another round in the same tier.
+ */
 function startNextRoundInSameTier() {
   timeLeft = getTierTime(tier);
   waterLevel = 0;
@@ -374,6 +473,9 @@ function startNextRoundInSameTier() {
   scheduleObstacleSpawn();
 }
 
+/**
+ * Handles a completed round and decides whether the tier advances.
+ */
 function completeRound() {
   const roundsRequired = getRoundsRequiredForTier();
   roundsCompletedInTier += 1;
@@ -394,6 +496,9 @@ function completeRound() {
   statusTextEl.textContent = `Round clear! Tier ${tier} progress ${roundsCompletedInTier}/${roundsRequired}.`;
 }
 
+/**
+ * Performs one timer tick and ends the game when time runs out.
+ */
 function tickTimer() {
   if (!isPlaying) {
     return;
@@ -407,6 +512,9 @@ function tickTimer() {
   }
 }
 
+/**
+ * Applies the passive leak effect for the current tier.
+ */
 function tickLeak() {
   if (!isPlaying) {
     return;
@@ -422,6 +530,9 @@ function tickLeak() {
   updateSpeedFeedback();
 }
 
+/**
+ * Handles a pump tap, updates water level, and checks for round completion.
+ */
 function handlePumpTap() {
   if (!isPlaying) {
     return;
@@ -440,6 +551,9 @@ function handlePumpTap() {
   }
 }
 
+/**
+ * Handles a successful obstacle tap.
+ */
 function handleObstacleTap() {
   if (!isPlaying) {
     return;
@@ -449,6 +563,9 @@ function handleObstacleTap() {
   hideObstacle();
 }
 
+/**
+ * Restores the game state without starting a new run.
+ */
 function resetGameState() {
   const settings = getDifficultySettings();
   stopLoops();
@@ -465,6 +582,9 @@ function resetGameState() {
   updateHud();
 }
 
+/**
+ * Starts a fresh game session and activates all gameplay loops.
+ */
 function startGame() {
   resetGameState();
   isPlaying = true;
@@ -482,11 +602,17 @@ function startGame() {
   scheduleObstacleSpawn();
 }
 
+/**
+ * Replays the game after the end screen.
+ */
 function replayGame() {
   endOverlay.classList.add('hidden');
   startGame();
 }
 
+/**
+ * Returns the user to the intro screen and clears active game UI.
+ */
 function resetToStartScreen() {
   resetGameState();
   endOverlay.classList.add('hidden');
