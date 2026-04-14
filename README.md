@@ -1,7 +1,6 @@
-# charity: water – Water Quest Game Starter
+# charity: water – Water Quest Game - Carlton Tukov
 
-In this game, users tap charity: water’s signature yellow jerry cans as fast as they can to earn points. You’ll be working from a partially built version of the game. Some functionality is already provided, and your job is to complete the rest.
-
+Charity: WaterTap is a browser game inspired by charity: water's mission. Players tap a pump rapidly to fill a water meter, clear rounds, and progress through increasing difficulty tiers before time runs out.
 ## What’s Already Done
 
 The starter files already include:
@@ -13,25 +12,50 @@ The starter files already include:
 - A **logo image** from charity: water
 - Working code that:
   - Starts the game when the start button is clicked  
-  - Makes jerry cans pop up randomly
+  - Makes Jerry Cans pop up randomly
 
 ## What You Need to Add
 
-Here’s what you're required to implement to bring the game to life:
+The fundamental mechanics are unchanged: players continuously tap to fill
+a water tank, working towards a goal that benefits the village. The game is
+designed to increase in difficulty over time. I introduced new
+enhancements, such as difficulty modes, to vary gameplay and keep it
+unique, preventing it from becoming boring after a short period.
+
 
 ### Game Functionality
 
-- **Update the score**
-  - +1 point for each can clicked  
+This project was expanded from a basic starter into a complete, playable arcade-style experience with:
 
-- **Add a 30-second timer**
-  - When the timer reaches 0, the game ends  
+1. A full gameplay loop with start, play, win/lose, replay, and reset flows.
+2. Tier-based progression where each tier increases challenge.
+3. Difficulty selection (Easy, Normal, Expert) with distinct tuning values.
+4. A leak system that drains water over time and creates pressure to keep tapping.
+5. Obstacle hazards that appear in higher tiers and reduce purity if missed.
+6. Round progression requirements per tier before leveling up.
+7. HUD tracking for timer, purity %, current tier, and tier progress.
+8. End overlays with outcome messaging and a direct donation link.
+9. Mission-focused educational content about clean water access.
+10. Responsive, branded UI using charity: water-inspired colors, typography, and animated effects.
 
-- **Display a message when the game ends**
-  - If the player scores **20 or more points**, show a **winning** message  
-  - If the player scores **less than 20 points**, show a **"try again"** message  
-  - Create one array of possible winning messages and one array of losing messages  
-  - Depending on whether the user wins or loses, randomly pick and display a message from the appropriate array  
+## Gameplay Summary
+
+1. Open the game and press Start Game.
+2. Read the mission card and continue to difficulty selection.
+3. Pick Easy, Normal, or Expert to begin immediately.
+4. Tap the pump quickly to increase the water meter.
+5. Counter tier leak pressure and avoid contamination obstacles in later tiers.
+6. Reach 100% to clear rounds and advance.
+7. Complete all required rounds through the final tier to win.
+
+If the timer reaches 0 before clearing the round, the run ends in Game Over.
+
+## Project Structure
+
+1. `index.html` - layout, overlays, HUD, controls, mission content, and links.
+2. `style.css` - branded visual system, responsive layout, and motion effects.
+3. `script.js` - game engine, difficulty presets, progression, obstacle handling, and events.
+4. `img/` - brand assets (including logo).
 
 ### Visual Styling
 
